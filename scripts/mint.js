@@ -1,3 +1,9 @@
+/*  This Script is used to mint a BasicNFT a local blockchain
+    To execute script on local network
+    1. `yarn hardhat node``
+    2. `yarn hardhat run scripts/mint.js --network localhost`
+*/
+
 const { ethers, network } = require("hardhat")
 const { moveBlocks } = require("../utils/move-blocks")
 
