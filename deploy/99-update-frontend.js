@@ -1,27 +1,43 @@
-const { ethers, network } = require("hardhat");
-const fs = require("fs");
+/* This Script is used to deploy update frontend for new deploys, contract addresses and ABI
+    - LOCALLY:
+        Deploy all scripts: 'yarn hardhat deploy'
+        Deploy ONLY this script: 'yarn hardhat deploy --tags frontend --network localhost'
+    - TESTNET
+        Deploy all scripts: 'yarn hardhat deploy --network goerli --tags frontend'
+        Deploy ONLY this script: 'yarn hardhat deploy --network goerli --tags frontend'
+*/
 
-const frontEndContractsFile = "../nextjs-nft-marketplace-fe/constants/networkMapping.json";
+const { frontEndContractsFile, frontEndAbiFile } = require("../helper-hardhat-config")
+const fs = require("fs")
+const { network, ethers } = require("hardhat")
 
-module.exports = async function () {
+module.exports = async () => {
     if (process.env.UPDATE_FRONT_END) {
-        console.log("updating front end...");
-        await updateContractAddresses();
+        console.log("Writing to front end...")
+        await updateAbi()
+        await updateContractAddresses()
+        console.log("Front end written!")
     }
-};
-
-async function updateContractAddresses() {
-    const nftMarketplace = await ethers.getContract("NftMarketplace");
-    const chainId = network.config.chainId.toString();
-    const contractAdresses = JSON.parse(fs.readFileSync(frontEndContractsFile, "utf8"));
-    if (chainId in contractAdresses) {
-        if (!contractAdresses[chainId]["NftMarketplace"].includes(nftMarketplace.address)) {
-            contractAdresses[chainId]["NftMarketplace"].push(nftMarketplace.address);
-        }
-    } else {
-        contractAdresses[chainId] = {NftMarketplace: [nftMarketplace.address]};
-    }
-    fs.writeFileSync(frontEndContractsFile, JSON.stringify(contractAdresses));
 }
 
-module.exports.tags = ["all", "frontend"];
+async function updateAbi() {
+    const nftMarketplace = await ethers.getContract("NftMarketplace")
+    fs.writeFileSync(`${frontEndAbiFile}NftMarketplace.json`, nftMarketplace.interface.format(ethers.utils.FormatTypes.json))
+
+    const basicNft = await ethers.getContract("BasicNft")
+    fs.writeFileSync(`${frontEndAbiFile}BasicNft.json`, basicNft.interface.format(ethers.utils.FormatTypes.json))
+}
+
+async function updateContractAddresses() {
+    const nftMarketplace = await ethers.getContract("NftMarketplace")
+    const contractAddresses = JSON.parse(fs.readFileSync(frontEndContractsFile, "utf8"))
+    if (network.config.chainId.toString() in contractAddresses) {
+        if (!contractAddresses[network.config.chainId.toString()]["NftMarketplace"].includes(nftMarketplace.address)) {
+            contractAddresses[network.config.chainId.toString()]["NftMarketplace"].push(nftMarketplace.address)
+        }
+    } else {
+        contractAddresses[network.config.chainId.toString()] = { NftMarketplace: [nftMarketplace.address] }
+    }
+    fs.writeFileSync(frontEndContractsFile, JSON.stringify(contractAddresses))
+}
+module.exports.tags = ["all", "frontend"]
