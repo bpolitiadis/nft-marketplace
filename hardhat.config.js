@@ -21,6 +21,12 @@ module.exports = {
         hardhat: {
             chainId: 31337,
             // gasPrice: 130000000000,
+            allowUnlimitedContractSize: true
+        },
+        localhost: {
+            chainId: 31337,
+            // gasPrice: 130000000000,
+            allowUnlimitedContractSize: true
         },
         goerli: {
             url: GOERLI_RPC_URL,
